@@ -2,6 +2,7 @@
 using RabbitMQ.Client.Events;
 using System;
 using System.Text;
+using System.Threading;
 
 namespace RabbitMQReceiver
 {
@@ -13,11 +14,15 @@ namespace RabbitMQReceiver
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.QueueDeclare(queue: "hello",
-                                     durable: false,
+                channel.QueueDeclare(queue: "task_queue",
+                                     durable: true,
                                      exclusive: false,
                                      autoDelete: false,
                                      arguments: null);
+
+                channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+
+                Console.WriteLine(" [*] Waiting for messages.");
 
                 var consumer = new EventingBasicConsumer(channel);
                 consumer.Received += (model, ea) =>
@@ -25,10 +30,16 @@ namespace RabbitMQReceiver
                     var body = ea.Body;
                     var message = Encoding.UTF8.GetString(body);
                     Console.WriteLine(" [x] Received {0}", message);
-                    System.Threading.Thread.Sleep(new System.Random().Next(1000));
+
+                    int dots = message.Split('.').Length - 1;
+                    Thread.Sleep(dots * 1000);
+
+                    Console.WriteLine(" [x] Done");
+
+                    channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
                 };
-                channel.BasicConsume(queue: "hello",
-                                     noAck: true,
+                channel.BasicConsume(queue: "task_queue",
+                                     noAck: false,
                                      consumer: consumer);
 
                 Console.WriteLine(" Press [enter] to exit.");
