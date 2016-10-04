@@ -1,0 +1,14 @@
+﻿using System;
+using RabbitMQ.Client;
+using System.Text;
+
+namespace RabbitSender
+{
+    class Send
+    {
+        public static void Main()
+        {
+        ...
+    }
+    }
+}
