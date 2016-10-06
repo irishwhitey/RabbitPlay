@@ -14,26 +14,24 @@ namespace RabbitMQReceiver
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.QueueDeclare(queue: "task_queue",
-                                     durable: true,
-                                     exclusive: false,
-                                     autoDelete: false,
-                                     arguments: null);
+                channel.ExchangeDeclare("logs", "fanout");
+                //channel.QueueDeclare(queue: "task_queue", durable: true, exclusive: false, autoDelete: false,
+                //    arguments: null);
+                var queueName = channel.QueueDeclare().QueueName;
+                channel.QueueBind(queue: queueName, exchange: "logs", routingKey: "");
 
+                Console.WriteLine(" [*] Waiting for logs.");
                 var consumer = new EventingBasicConsumer(channel);
-                channel.BasicQos(0, 1, false);
+
                 consumer.Received += (model, ea) =>
                 {
                     var body = ea.Body;
                     var message = Encoding.UTF8.GetString(body);
                     Console.WriteLine(" [x] Received {0}", message);
-                    int dots = message.Split('.').Length - 1;
-                    Thread.Sleep(dots * 1000);
-                    channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
-                    Console.WriteLine(" [x] Done");
+
 
                 };
-                channel.BasicConsume(queue: "task_queue", noAck: false, consumer: consumer);
+                channel.BasicConsume(queue: queueName, noAck: true, consumer: consumer);
 
                 Console.WriteLine(" Press [enter] to exit.");
                 Console.ReadLine();
