@@ -21,6 +21,7 @@ namespace RabbitMQReceiver
                                      arguments: null);
 
                 var consumer = new EventingBasicConsumer(channel);
+                channel.BasicQos(0, 1, false);
                 consumer.Received += (model, ea) =>
                 {
                     var body = ea.Body;
