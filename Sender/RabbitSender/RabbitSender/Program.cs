@@ -13,15 +13,18 @@ namespace RabbitSender
             {
                 using (var channel = connection.CreateModel())
                 {
-                    for (int i = 0; i < 1000000; i++)
+                    for (int i = 0; i < 10; i++)
                     {
-                        channel.ExchangeDeclare("logs", "fanout");
+                        channel.ExchangeDeclare("direct_logs", "direct");
                         //channel.QueueDeclare(queue: "task_queue", durable: true, 
                         //    exclusive: false, autoDelete: false, arguments: null);
                         var message = $"message {i}";
                         var body = Encoding.UTF8.GetBytes(message);
-
-                        channel.BasicPublish(exchange: "logs", routingKey: "", basicProperties: null, body: body);
+                        var severity = (args.Length > 0) ? args[0] : "info";
+                        Console.WriteLine($"using routing key #{severity}");
+                        channel.BasicPublish(exchange: "direct_logs",
+                            routingKey: severity,
+                            basicProperties: null, body: body);
 
                         Console.WriteLine(" [x] Sent {0}", message);
                     }

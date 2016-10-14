@@ -8,17 +8,19 @@ namespace RabbitMQReceiver
 {
     class Receive
     {
-        public static void Main()
+        public static void Main(string[] args)
         {
             var factory = new ConnectionFactory() { HostName = "localhost" };
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.ExchangeDeclare("logs", "fanout");
+                channel.ExchangeDeclare("direct_logs", "direct");
                 //channel.QueueDeclare(queue: "task_queue", durable: true, exclusive: false, autoDelete: false,
                 //    arguments: null);
                 var queueName = channel.QueueDeclare().QueueName;
-                channel.QueueBind(queue: queueName, exchange: "logs", routingKey: "");
+                var routingKey = args[0];
+                Console.WriteLine($"using routing key #{routingKey}");
+                channel.QueueBind(queue: queueName, exchange: "direct_logs", routingKey: routingKey);
 
                 Console.WriteLine(" [*] Waiting for logs.");
                 var consumer = new EventingBasicConsumer(channel);
